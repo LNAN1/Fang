@@ -5,18 +5,18 @@ import scrapy
 import re
 import time
 
-
 import sys
-sys.path.append('C:/Users/25802/fang/fang')
 
-from fang.items import NewHouseItem, ESFHouseItem
+sys.path.append('..')
+sys.path.append('..')
+
+from items import NewHouseItem, ESFHouseItem
 
 
 class SfwSpider(scrapy.Spider):
     name = 'sfw'
     allowed_domains = ['fang.com']
     start_urls = ['https://www.fang.com/SoufunFamily.htm']
-
 
     def parse(self, response):
         trs = response.xpath("//div[@class='outCont']//tr")
@@ -56,12 +56,11 @@ class SfwSpider(scrapy.Spider):
                 yield scrapy.Request(url=newhouse_url, callback=self.parse_newhouse, meta={"info": (province, city)})
                 yield scrapy.Request(url=esf_url, callback=self.parse_esf, meta={"info": (province, city)})
 
-
     def parse_newhouse(self, response):
         province, city = response.meta.get("info")
         lis = response.xpath("//div[contains(@class, 'nl_con')]/ul/li")
         for li in lis:
-            name = li.xpath(".//div[@class='nlcd_name']/a/text()").get() # 为什么不直接.strip（）呢？ 因为里面有莫名其妙的None值
+            name = li.xpath(".//div[@class='nlcd_name']/a/text()").get()  # 为什么不直接.strip（）呢？ 因为里面有莫名其妙的None值
             if name == None:
                 continue
             name = name.strip()
@@ -90,7 +89,8 @@ class SfwSpider(scrapy.Spider):
 
             origin_url = li.xpath(".//div[@class='nlcd_name']/a/@href").get()
 
-            item = NewHouseItem(province=province, city=city, name=name, rooms=rooms, area=area, address=address, district=district, sale=sale, price=price, origin_url=origin_url)
+            item = NewHouseItem(province=province, city=city, name=name, rooms=rooms, area=area, address=address,
+                                district=district, sale=sale, price=price, origin_url=origin_url)
 
             yield item
 
@@ -104,8 +104,6 @@ class SfwSpider(scrapy.Spider):
             print(next_url)
             print(complete_orl)
             yield scrapy.Request(url=complete_orl, callback=self.parse_newhouse, meta={"info": (province, city)})
-
-
 
     def parse_esf(self, response):
         province, city = response.meta.get("info")
@@ -149,4 +147,5 @@ class SfwSpider(scrapy.Spider):
         print(response.url)
 
         if next_url:
-            yield scrapy.Request(url=response.urljoin(next_url), callback=self.parse_esf, meta={"info": (province, city)})
+            yield scrapy.Request(url=response.urljoin(next_url), callback=self.parse_esf,
+                                 meta={"info": (province, city)})
